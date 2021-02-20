@@ -23,7 +23,7 @@ func (i *InMemoryPlayerStore) GetPlayerScore(name string) int {
 
 func main() {
     
-    server := &PlayerServer{NewInMemoryPlayerStore()}
+    server := NewPlayerServer(NewInMemoryPlayerStore())
     if err := http.ListenAndServe("0.0.0.0:8888", server); err != nil {
         log.Fatalf("could not listen on port 8888 because of %v", err)
     }
