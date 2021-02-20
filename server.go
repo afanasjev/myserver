@@ -18,21 +18,23 @@ type PlayerStore interface {
 func (p *PlayerServer) ServeHTTP(response http.ResponseWriter, request *http.Request) {
     router := http.NewServeMux()
 
-    router.Handle("/league", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
-        w.WriteHeader(http.StatusOK)
-    }))
-
-    router.Handle("/players/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
-        player := strings.TrimPrefix(r.URL.Path, "/players/")
-        switch r.Method {
-        case http.MethodPost:
-            p.processWin(w, player)
-        case http.MethodGet:
-            p.showScore(w, player)
-        }
-    }))
-
+    router.Handle("/league", http.HandlerFunc(p.leagueHandler))
+    router.Handle("/players/", http.HandlerFunc(p.playerHandler))
     router.ServeHTTP(response, request)
+}
+
+func (p *PlayerServer) leagueHandler (w http.ResponseWriter, r *http.Request){
+    w.WriteHeader(http.StatusOK)
+}
+
+func (p *PlayerServer) playerHandler (w http.ResponseWriter, r *http.Request){
+    player := strings.TrimPrefix(r.URL.Path, "/players/")
+    switch r.Method {
+    case http.MethodPost:
+        p.processWin(w, player)
+    case http.MethodGet:
+        p.showScore(w, player)
+    }
 }
 
 func (p *PlayerServer) processWin(response http.ResponseWriter, player string) {
