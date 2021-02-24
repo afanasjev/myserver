@@ -4,7 +4,13 @@ import (
     "net/http"
     "fmt"
     "strings"
+    "encoding/json"
 )
+
+type Player struct {
+    Name string
+    Wins int
+}
 
 type PlayerServer struct {
     store PlayerStore
@@ -28,7 +34,15 @@ func NewPlayerServer(store PlayerStore) *PlayerServer {
     return server
 }
 
+func (p *PlayerServer) getLeagueTable() ([]Player) {
+    return []Player{
+        {"Chris", 20},
+    }
+}
+
 func (p *PlayerServer) leagueHandler (w http.ResponseWriter, r *http.Request){
+
+    json.NewEncoder(w).Encode(p.getLeagueTable())
     w.WriteHeader(http.StatusOK)
 }
 

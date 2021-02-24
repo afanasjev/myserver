@@ -5,6 +5,7 @@ import (
     "net/http"
     "net/http/httptest"
     "fmt"
+    "encoding/json"
 )
 
 type StubPlayerStore struct {
@@ -77,6 +78,14 @@ func TestLeague(t *testing.T){
         response := httptest.NewRecorder()
 
         server.ServeHTTP(response, request)
+        var got []Player
+
+        err := json.NewDecoder(response.Body).Decode(&got)
+
+        if err != nil {
+            t.Errorf("Unable decode json %q with error: %v\n", response.Body, err)
+        }
+
         assertStatus(t, response.Code, http.StatusOK)
     })
 
