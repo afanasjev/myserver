@@ -6,16 +6,22 @@ import (
     "net/http/httptest"
     "fmt"
     "encoding/json"
+    "reflect"
 )
 
 type StubPlayerStore struct {
     scores map[string]int
     winCalls []string
+    league []Player
 }
 
 func (s *StubPlayerStore) GetPlayerScore(name string) int {
     score := s.scores[name]
     return score
+}
+
+func (s *StubPlayerStore) GetLeague() []Player {
+    return s.league
 }
 
 func (s *StubPlayerStore) RecordWin(name string) {
@@ -70,7 +76,12 @@ func TestGETPlayers(t *testing.T) {
 }
 
 func TestLeague(t *testing.T){
-    store := StubPlayerStore{}
+    wantedLeague := []Player{
+        {"First", 10},
+        {"Second", 30},
+        {"Third", 15},
+    }
+    store := StubPlayerStore{nil, nil, wantedLeague}
     server := NewPlayerServer(&store)
 
     t.Run("/league returns 200 OK", func(t *testing.T){
@@ -87,6 +98,10 @@ func TestLeague(t *testing.T){
         }
 
         assertStatus(t, response.Code, http.StatusOK)
+
+        if !reflect.DeepEqual(got, wantedLeague) {
+            t.Errorf("got %v want %v", got, wantedLeague)
+        }
     })
 
 }
