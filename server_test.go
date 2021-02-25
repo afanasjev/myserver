@@ -7,6 +7,7 @@ import (
     "fmt"
     "encoding/json"
     "reflect"
+    "io"
 )
 
 type StubPlayerStore struct {
@@ -76,34 +77,56 @@ func TestGETPlayers(t *testing.T) {
 }
 
 func TestLeague(t *testing.T){
-    wantedLeague := []Player{
-        {"First", 10},
-        {"Second", 30},
-        {"Third", 15},
-    }
-    store := StubPlayerStore{nil, nil, wantedLeague}
-    server := NewPlayerServer(&store)
+    t.Run("/league returns league table", func(t *testing.T){
+        wantedLeague := []Player{
+            {"First", 10},
+            {"Second", 30},
+            {"Third", 15},
+        }
 
-    t.Run("/league returns 200 OK", func(t *testing.T){
-        request, _ := http.NewRequest(http.MethodGet, "/league", nil)
+        store := StubPlayerStore{nil, nil, wantedLeague}
+        server := NewPlayerServer(&store)
+
+        request := newLagueRequest()
         response := httptest.NewRecorder()
 
         server.ServeHTTP(response, request)
-        var got []Player
 
-        err := json.NewDecoder(response.Body).Decode(&got)
+        got := getLeagueFromResponse(t, response.Body)
 
-        if err != nil {
-            t.Errorf("Unable decode json %q with error: %v\n", response.Body, err)
+        if response.Result().Header.Get("content-type") != jsonContentType {
+            t.Errorf(
+                "response did not have content-type of application/json, got %v",
+                response.Result().Header)
         }
 
         assertStatus(t, response.Code, http.StatusOK)
+        assertLeague(t, got, wantedLeague)
 
-        if !reflect.DeepEqual(got, wantedLeague) {
-            t.Errorf("got %v want %v", got, wantedLeague)
-        }
     })
 
+}
+
+func getLeagueFromResponse(t *testing.T, body io.Reader) (league []Player) {
+    t.Helper()
+    err := json.NewDecoder(body).Decode(&league)
+    if err != nil {
+        t.Fatalf("Unable decode json %q with error: %v\n", body, err)
+    }
+
+    return
+}
+
+func assertLeague(t *testing.T, got, want []Player) {
+    t.Helper()
+    if !reflect.DeepEqual(got, want) {
+        t.Errorf("got %v want %v", got, want)
+    }
+}
+
+func newLagueRequest() *http.Request {
+    request, _ := http.NewRequest(http.MethodGet, "/league", nil)
+    return request
 }
 
 func newGetScoreRequest(player string) *http.Request {
